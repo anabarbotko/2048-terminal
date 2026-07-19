@@ -1,7 +1,7 @@
 # 2048-terminal
 A terminal version of "2048" puzzle game written in Python using the curses library.
 
-##Features:
+Features:
 - Terminal interface
 - Arrow key controls
 - Colored tiles
@@ -10,11 +10,11 @@ A terminal version of "2048" puzzle game written in Python using the curses libr
 - Victory/Defeat screen
 - Random generation of new tiles
 
-##Controles:
+Controles:
 - → ← ↑ ↓ — move tiles
 - Q — quit the game
 
-##Requirements:
+Requirements:
 - Python 3
 - Curses
 
