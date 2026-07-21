@@ -2,10 +2,14 @@ import curses
 from curses import window
 import random 
 
+#constants
+ROW_SIZE = 4
+COLUMN_SIZE = 4
+
 def adding_random_2(values):
     zero_positions = []
-    for r in range(4):
-        for c in range(4):
+    for r in range(ROW_SIZE):
+        for c in range(COLUMN_SIZE):
             if values[r][c] == 0:
                 pos = [r, c]
                 zero_positions.append(pos)
@@ -36,8 +40,8 @@ def move_left_row(values_row):
     for i in values:
         if i != 0:
             values_row.append(i)
-    if len(values_row) != 4:
-        zeros = 4 - len(values_row)
+    if len(values_row) != ROW_SIZE:
+        zeros = ROW_SIZE - len(values_row)
         for i in range(zeros):
             values_row.append(0)
     return values_row
@@ -60,7 +64,7 @@ def turn_up(values):
     row = []
     for c in range(4):
         row = []
-        for r in range(3, -1, -1):
+        for r in range(ROW_SIZE - 1, -1, -1):
             row.append(values[r][c])
         values_turned.append(row)
     return values_turned
@@ -70,7 +74,7 @@ def turn_down(values):
     row = []
     for c in range(3,-1, -1):
         row = []
-        for r in range(4):
+        for r in range(ROW_SIZE):
             row.append(values[r][c])
         values_turned.append(row)
     return values_turned
@@ -88,16 +92,27 @@ def move_down(values):
     return(values)
     
 def can_move(values):
-    for r in range(4):
-        for c in range(3):
+    for r in range(ROW_SIZE):
+        for c in range(COLUMN_SIZE - 1):
             if values[r][c] == values[r][c+1]:
                 return True
-    for c in range(4):
-        for r in range(3):
+    for c in range(COLUMN_SIZE):
+        for r in range(ROW_SIZE - 1):
             if values[r][c] == values[r+1][c]:
                 return True
     return False
-        
+
+moves = {
+    curses.KEY_LEFT: move_left, curses.KEY_RIGHT: move_right, curses.KEY_UP: move_up, curses.KEY_DOWN: move_down
+}
+
+def check_changes(key, values):
+    new_values = [row[:] for row in values]
+    new_values = moves[key](new_values)
+    if new_values != values:
+        return new_values
+    return None
+
 def the_game(stdscr: window):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -114,7 +129,7 @@ def the_game(stdscr: window):
 
     stdscr.keypad(True)
     height, width = stdscr.getmaxyx()
-    y, x = height//4, width//4
+    horizontal_line, vertical_line = height // COLUMN_SIZE, width // ROW_SIZE
     values = [
         [0,0,0,0],
         [0,0,0,0],
@@ -122,46 +137,27 @@ def the_game(stdscr: window):
         [0,0,0,0]
     ]
 
-    coordinate_y, coordinate_x = height//8, width//8
+    first_coordinate_y, first_coordinate_x = horizontal_line // 2, vertical_line // 2
 
     values = adding_random_2(values)
     while True:
         stdscr.erase()
         stdscr.bkgd(' ', curses.color_pair(1))
         for i in range(3):
-            stdscr.hline(y + i*y, 0, curses.ACS_HLINE, width, curses.color_pair(1))
-            stdscr.vline(0, x + i*x, curses.ACS_HLINE, height, curses.color_pair(1))
-        for r in range(4):
-            for c in range(4):
-                stdscr.addstr(coordinate_y, coordinate_x + c * x, str(values[r][c]), curses.color_pair(value_color[values[r][c]]))
-            coordinate_y += y
-        coordinate_y = height//8
+            stdscr.hline(horizontal_line + i * horizontal_line, 0, curses.ACS_HLINE, width, curses.color_pair(1))
+            stdscr.vline(0, vertical_line + i * vertical_line, curses.ACS_HLINE, height, curses.color_pair(1))
+        for r in range(ROW_SIZE):
+            for c in range(COLUMN_SIZE):
+                stdscr.addstr(first_coordinate_y, first_coordinate_x + c * vertical_line, str(values[r][c]), curses.color_pair(value_color[values[r][c]]))
+            first_coordinate_y += horizontal_line
+        first_coordinate_y = horizontal_line // 2
         key = stdscr.getch()
         stdscr.refresh()
-        if key == curses.KEY_LEFT:
-            new_values = [row[:] for row in values]
-            new_values = move_left(new_values)
-            if new_values != values:
+        if key in moves:
+            new_values = check_changes(key, values)
+            if new_values is not None:
                 values = new_values
-                values = adding_random_2(values)
-        elif key == curses.KEY_RIGHT:
-            new_values = [row[:] for row in values]
-            new_values = move_right(new_values)
-            if new_values != values:
-                values = new_values
-                values = adding_random_2(values)
-        elif key == curses.KEY_UP:
-            new_values = [row[:] for row in values]
-            new_values = move_up(new_values)
-            if new_values != values:
-                values = new_values
-                values = adding_random_2(values)
-        elif key == curses.KEY_DOWN:
-            new_values = [row[:] for row in values]
-            new_values = move_down(new_values)
-            if new_values != values:
-                values = new_values
-                values = adding_random_2(values)
+                adding_random_2(values)
         elif key == ord('q') or key == ord('Q'):
             return key
         else:
